@@ -19,6 +19,7 @@ export function PrivateChat() {
   const [selfDestruct, setSelfDestruct] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isTypingRef = useRef(false);
 
   const activeChat = activePrivateChat ? privateChats[activePrivateChat] : null;
   const isPartnerTyping = activePrivateChat ? privateTypingUsers[activePrivateChat] : false;
@@ -52,13 +53,17 @@ export function PrivateChat() {
     setInput(e.target.value);
     
     if (activePrivateChat) {
-      sendTypingEvent(true, activePrivateChat);
+      if (!isTypingRef.current) {
+        isTypingRef.current = true;
+        sendTypingEvent(true, activePrivateChat);
+      }
       
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
       
       typingTimeoutRef.current = setTimeout(() => {
+        isTypingRef.current = false;
         sendTypingEvent(false, activePrivateChat);
       }, 2000);
     }
@@ -69,6 +74,7 @@ export function PrivateChat() {
     if (input.trim() && activePrivateChat) {
       sendPrivateMessage(activePrivateChat, input, selfDestruct);
       setInput('');
+      isTypingRef.current = false;
       sendTypingEvent(false, activePrivateChat);
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     }

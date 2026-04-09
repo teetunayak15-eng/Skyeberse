@@ -7,6 +7,7 @@ export function GlobalChat() {
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isTypingRef = useRef(false);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -15,13 +16,17 @@ export function GlobalChat() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value);
     
-    sendTypingEvent(true, undefined, true);
+    if (!isTypingRef.current) {
+      isTypingRef.current = true;
+      sendTypingEvent(true, undefined, true);
+    }
     
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
     
     typingTimeoutRef.current = setTimeout(() => {
+      isTypingRef.current = false;
       sendTypingEvent(false, undefined, true);
     }, 2000);
   };
@@ -31,6 +36,7 @@ export function GlobalChat() {
     if (input.trim()) {
       sendGlobalMessage(input);
       setInput('');
+      isTypingRef.current = false;
       sendTypingEvent(false, undefined, true);
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     }

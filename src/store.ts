@@ -285,6 +285,11 @@ export const useAppStore = create<AppState>((set, get) => ({
     };
 
     socket.emit('send_global', message);
+
+    // Optimistically update the UI
+    set((state) => ({
+      globalMessages: [...state.globalMessages, message].slice(-100),
+    }));
   },
 
   startPrivateChat: async (partnerId: string) => {

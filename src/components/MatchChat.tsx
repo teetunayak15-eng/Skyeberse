@@ -16,6 +16,7 @@ export function MatchChat() {
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isTypingRef = useRef(false);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -25,13 +26,17 @@ export function MatchChat() {
     setInput(e.target.value);
     
     if (matchState.roomId) {
-      sendTypingEvent(true, undefined, false, matchState.roomId);
+      if (!isTypingRef.current) {
+        isTypingRef.current = true;
+        sendTypingEvent(true, undefined, false, matchState.roomId);
+      }
       
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
       
       typingTimeoutRef.current = setTimeout(() => {
+        isTypingRef.current = false;
         sendTypingEvent(false, undefined, false, matchState.roomId!);
       }, 2000);
     }
@@ -43,6 +48,7 @@ export function MatchChat() {
       sendMatchMessage(input);
       setInput('');
       if (matchState.roomId) {
+        isTypingRef.current = false;
         sendTypingEvent(false, undefined, false, matchState.roomId);
       }
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);

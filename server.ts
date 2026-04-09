@@ -21,7 +21,7 @@ async function startServer() {
   // Rate limiting map: IP -> array of timestamps
   const rateLimits = new Map<string, number[]>();
   const RATE_LIMIT_WINDOW = 10000; // 10 seconds
-  const MAX_MESSAGES = 15;
+  const MAX_MESSAGES = 50; // Increased to prevent false positives with typing events
 
   function checkRateLimit(ip: string): boolean {
     const now = Date.now();
@@ -56,8 +56,8 @@ async function startServer() {
       // Enforce identity (prevent spoofing)
       message.senderId = currentUserId;
       
-      // Relay only, do not store
-      io.to('global').emit('new_global_message', message);
+      // Relay only to others, do not store
+      socket.to('global').emit('new_global_message', message);
     });
 
     socket.on('private_message', (data: { to: string; from: string; encryptedData: any; timestamp: number; selfDestruct?: boolean }) => {
