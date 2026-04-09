@@ -69,7 +69,14 @@ export const useAppStore = create<AppState>((set, get) => ({
   userId: '',
   socket: null,
   view: 'global',
-  globalMessages: [],
+  globalMessages: (() => {
+    try {
+      const saved = localStorage.getItem('openanon_global_messages');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  })(),
   activeUsersCount: 0,
   isConnected: false,
   
@@ -123,8 +130,10 @@ export const useAppStore = create<AppState>((set, get) => ({
       set((state) => {
         const newGlobalTyping = new Set(state.globalTypingUsers);
         newGlobalTyping.delete(message.senderId);
+        const newMessages = [...state.globalMessages, message].slice(-100);
+        localStorage.setItem('openanon_global_messages', JSON.stringify(newMessages));
         return {
-          globalMessages: [...state.globalMessages, message].slice(-100),
+          globalMessages: newMessages,
           globalTypingUsers: newGlobalTyping,
         };
       });
@@ -287,9 +296,13 @@ export const useAppStore = create<AppState>((set, get) => ({
     socket.emit('send_global', message);
 
     // Optimistically update the UI
-    set((state) => ({
-      globalMessages: [...state.globalMessages, message].slice(-100),
-    }));
+    set((state) => {
+      const newMessages = [...state.globalMessages, message].slice(-100);
+      localStorage.setItem('openanon_global_messages', JSON.stringify(newMessages));
+      return {
+        globalMessages: newMessages,
+      };
+    });
   },
 
   startPrivateChat: async (partnerId: string) => {
